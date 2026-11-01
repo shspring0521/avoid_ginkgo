@@ -853,7 +853,7 @@ function drawFoot(x,y,s,side,j){
   }
   const big=eq.shoe==='bigfoot'?1.42:1;
   drawLeg(x,y,s*big,side,j);
-  ctx.save();ctx.translate(x+j,y);ctx.scale(s*big,s*big);drawShoeShape();ctx.restore();
+  ctx.save();ctx.translate(x+j,y);ctx.scale(s*big*(eq.shoe==='bigfoot'&&side<0?-1:1),s*big);drawShoeShape();ctx.restore();
 }
 
 function drawFeet(hideIdx=-1){
@@ -967,7 +967,7 @@ function stinkLines(x,y,a,spread=1){
   ctx.restore();
 }
 
-function drawSole(x,y,s,rot,it){
+function drawSole(x,y,s,rot,it,side=1){
   ctx.save();ctx.translate(x,y);ctx.rotate(rot);ctx.scale(s,s);
   const k=eq.shoe,lw=1.4;
   if(k==='heel'){
@@ -991,7 +991,7 @@ function drawSole(x,y,s,rot,it){
     ctx.beginPath();ctx.arc(0,-4,14,0,7);ctx.fillStyle='#8a5a2b';ctx.fill();ctx.strokeStyle='#5a3a1a';ctx.lineWidth=lw;ctx.stroke();
     ctx.strokeStyle='rgba(60,35,10,.55)';ctx.lineWidth=.9;for(const r of [3,6.5,10]){ctx.beginPath();ctx.arc(0,-4,r,0,7);ctx.stroke()}
   }else if(k==='bigfoot'){
-    ctx.save();ctx.scale(1.3,1.3);
+    ctx.save();ctx.scale(side>0?-1.3:1.3,1.3); // sole seen from below: big toe on the outer side of the picture
     ell(0,3,14,24,SKIN,SKIN_D,lw);
     for(const[px,py,r] of [[-7,-24,5],[1,-26.5,3.6],[6.5,-25,3.2],[10.5,-21.5,2.8],[13,-16.5,2.5]]){ctx.beginPath();ctx.arc(px,py,r,0,7);ctx.fillStyle=SKIN;ctx.fill();ctx.strokeStyle=SKIN_D;ctx.lineWidth=1;ctx.stroke()}
     ctx.fillStyle='rgba(90,70,50,.25)';ctx.beginPath();ctx.ellipse(0,16,9,7,0,0,7);ctx.fill();
@@ -1050,7 +1050,7 @@ function render(){
     const q=ease(clamp((ft-1.7)/.55,0,1));
     let x=lerp(fail.sx,W/2,q),y=lerp(H+120,350,q),s=lerp(1,4.3,q),r=Math.sin(t*14)*.04;
     if(ft>=3){const k=ease(clamp((ft-3)/.9,0,1));y+=k*520;r+=k*.8}
-    drawSole(x,y,s,r,fail.it);
+    drawSole(x,y,s,r,fail.it,fail.f.side);
     if(ft<3.1)stinkLines(x,y-60,1,1.8);
     if(ft>=2.05&&ft<3.2){
       const w=Math.sin(t*30)*3;
