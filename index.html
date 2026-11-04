@@ -116,6 +116,25 @@ button:focus-visible{outline:.15em dashed var(--red);outline-offset:.15em}
 .pc{aspect-ratio:1;border:.12em solid var(--ink);border-radius:.35em;cursor:pointer;padding:0;min-width:0}
 .pc.on{box-shadow:0 0 0 .18em var(--red)}
 .smsg{margin:0;font-size:.8em;color:var(--red);min-height:1.1em}
+/* tutorial */
+.tutbtn{position:absolute;top:.7em;right:.7em;font-size:.95em;background:var(--gold);z-index:2}
+.tutpane{display:flex;flex-direction:column;gap:.5em;min-height:0;overflow-y:auto}
+#demo{display:block;width:100%;aspect-ratio:360/330;max-width:100%;border:.14em solid var(--ink);border-radius:.6em;background:#c3c1b9}
+.tips{margin:0;padding:0 0 0 1.1em;text-align:left;font-size:.82em;line-height:1.4;display:flex;flex-direction:column;gap:.2em}
+.dex{display:grid;grid-template-columns:4.2em 1fr;gap:.55em;align-items:start;text-align:left;background:#fff;border:.13em solid var(--ink);border-radius:.55em;padding:.45em .55em}
+.dicon{display:block;width:100%;aspect-ratio:1;border-radius:.45em;background:#c3c1b9;border:.1em solid rgba(43,32,19,.35)}
+.dtext{display:flex;flex-direction:column;gap:.2em;min-width:0}
+.dhead{display:flex;align-items:center;justify-content:space-between;gap:.4em;flex-wrap:wrap}
+.dhead b{font-weight:400;font-size:1.05em}
+.dtag{font-size:.72em;padding:.1em .5em;border-radius:1em;border:.1em solid var(--ink);white-space:nowrap}
+.dtag.die{background:var(--red);color:#fff}
+.dtag.maybe{background:#f0a540}
+.dtag.safe{background:var(--clear)}
+.dtext p{margin:0;font-size:.78em;line-height:1.38}
+.dmeta2{font-size:.7em;opacity:.65}
+.drybar{height:.55em;border-radius:1em;border:.1em solid var(--ink);background:linear-gradient(90deg,#e3801f,#f4efe1)}
+.drylab{display:flex;justify-content:space-between;font-size:.66em;opacity:.75}
+.dnote{margin:0;font-size:.75em;text-align:left;opacity:.75;line-height:1.35}
 </style>
 </head>
 <body>
@@ -129,6 +148,7 @@ button:focus-visible{outline:.15em dashed var(--red);outline-offset:.15em}
   <button class="cbtn" id="skip" type="button" hidden>스킵 ▶▶</button>
 
   <div class="ov dim" id="menu">
+    <button class="cbtn tutbtn" id="btnTut" type="button">튜토리얼</button>
     <div class="card">
       <h1>은행 밟지 마</h1>
       <p class="sub">가을 보도블록 생존기</p>
@@ -162,6 +182,26 @@ button:focus-visible{outline:.15em dashed var(--red);outline-offset:.15em}
       <div class="act"><span id="selName"></span><button class="btn" id="btnAct" type="button">신기</button></div>
       <p class="smsg" id="smsg"></p>
       <button class="btn alt" id="btnShopBack" type="button">처음으로</button>
+    </div>
+  </div>
+
+  <div class="ov dim" id="tut" hidden>
+    <div class="card shop">
+      <div class="shead"><h2>튜토리얼</h2><button class="cbtn" id="btnTutClose" type="button">닫기</button></div>
+      <div class="tabs" role="tablist">
+        <button class="tab" id="tabCtrl" type="button" role="tab" aria-selected="true">조작법</button>
+        <button class="tab" id="tabDex" type="button" role="tab" aria-selected="false">도감</button>
+      </div>
+      <div class="tutpane" id="tutCtrl">
+        <canvas id="demo"></canvas>
+        <ul class="tips">
+          <li>화면 아무 곳이나 누른 채 좌우로 드래그하면 캐릭터가 손가락 쪽으로 걸어가요.</li>
+          <li>옆으로 가는 속도에는 한계가 있어요. 은행이 보이면 미리 움직이세요.</li>
+          <li>발이 바닥에 닿는 순간만 판정해요. 공중에 뜬 발 밑으로 지나가는 은행은 괜찮아요.</li>
+          <li>앞으로 걷는 속도(초당 2m)와 보폭은 바뀌지 않아요. 발소리 박자를 익히세요.</li>
+        </ul>
+      </div>
+      <div class="list" id="tutDex" hidden></div>
     </div>
   </div>
 
@@ -216,7 +256,7 @@ const THEMES=[
   {name:'상점가',      floor:'#cbbaa4',line:'#ab9a84',alt:'#b9a68f',side:'shop'},
   {name:'주택가',      floor:'#a8a9a3',line:'#8d8e88',side:'brick'},
 ];
-const TYPES=[['pulp',.12],['seed',.08],['burst',.35],['frag',.10],['leaf',.35]];
+const TYPES=[['pulp',.12],['seed',.05],['burst',.35],['frag',.10],['leaf',.38]];
 const LAYER={burst:0,frag:1,seed:2,pulp:3,leaf:4};
 const SIZE=0.8;            // ginkgo size multiplier
 const realDens=n=>Math.round(n*SIZE*SIZE); // floor area actually covered after shrinking
@@ -236,9 +276,9 @@ const BASE_BOX={dx:0,dy:0,rx:9,ry:16};
 const SHOES={
   sneaker:{name:'운동화',price:0,  desc:'기본 신발 · 범위 100%',gunk:'신발에',
     box:[BASE_BOX]},
-  heel:   {name:'하이힐',price:50, desc:'모든 은행 회피율 +15%',gunk:'하이힐에',
+  heel:   {name:'하이힐',price:50, desc:'모든 은행 회피율 +20%',gunk:'하이힐에',
     box:[BASE_BOX]},
-  soccer: {name:'축구화',price:50, desc:'모든 은행 회피율 +15%',gunk:'축구화에',
+  soccer: {name:'축구화',price:50, desc:'모든 은행 회피율 +20%',gunk:'축구화에',
     box:[BASE_BOX]},
   stilts: {name:'막대기',price:100,desc:'나무 막대기 끝만 닿는다 · 범위 50%',gunk:'막대기에',
     box:[{dx:0,dy:0,rx:6.4,ry:11.3}]},
@@ -388,11 +428,12 @@ function makeItem(type,wy0,items){
     it.r=rnd(10,13.5);it.hr=it.r;it.x=rx();it.wy=ry();it.area=Math.PI*it.r*it.r;
     it.wr=[0,1,2,3].map(()=>({a:rnd(0,6.28),s:rnd(.3,.75)}));
   }else if(type==='seed'){
-    it.r=8;it.hr=7.5;it.x=rx();it.wy=ry();it.area=Math.PI*6.5*8.5;
+    it.r=8;it.hr=7.5*.9;it.x=rx();it.wy=ry();it.area=Math.PI*6.5*8.5; // looks the same, hit range 10% smaller
   }else if(type==='burst'){
-    it.r=rnd(17,25);it.hr=it.r*.82;it.x=rx();it.wy=ry();it.area=Math.PI*it.r*it.r*.85;
-    // 70% fairly dry (70-100), 30% wetter (0-70)
-    it.dry=Math.round(Math.random()<.7?rnd(70,100):rnd(0,70));
+    it.r=rnd(17,25);it.area=Math.PI*it.r*it.r*.85; // area keeps the old size so the count does not go up
+    it.r*=.95;it.hr=it.r*.82;it.x=rx();it.wy=ry();
+    // 45% bone dry (100), 30% 70-99, 25% wetter (0-69)
+    {const q=Math.random();it.dry=q<.45?100:q<.75?Math.floor(rnd(70,100)):Math.floor(rnd(0,70))}
     it.pts=Array.from({length:12},()=>it.r*rnd(.72,1.15));
     it.spots=[0,1,2].map(()=>({a:rnd(0,6.28),d:rnd(0,.5)*it.r,r:rnd(2,4.5)}));
   }else if(type==='frag'){
@@ -503,7 +544,7 @@ function checkLanding(f){
       if(it.type==='frag'&&Math.random()<.4){msg=msg||'너무 작아서 괜찮음';continue}
       p=(100-it.dry)/100;
     }
-    if(soccer)p=Math.max(0,p-.15);
+    if(soccer)p=Math.max(0,p-.2);
     if(Math.random()<p){doFail(it,f,p);return}
     if(danger(it)){msg=SHOES[eq.shoe].name+' 덕분에 살았다!';SFX.crunch();continue}
     msg=msg||(it.dry>=90?'바삭':'휴... 안 묻었다');
@@ -1096,11 +1137,12 @@ function frame(now){
   const dt=Math.min(.05,(now-last)/1000);last=now;
   if(state!=='pause')update(dt);
   render();
+  if(state==='tut'&&tutTab==='ctrl')drawDemo(dt);
   requestAnimationFrame(frame);
 }
 
 // ---------- screens ----------
-const OVS=['menu','chal','shop','over','pause'];
+const OVS=['menu','chal','shop','over','pause','tut'];
 function showOnly(id){OVS.forEach(k=>$(k).hidden=k!==id)}
 function refreshMenu(){
   $('recInf').textContent=best.inf.toFixed(1)+'m';
@@ -1248,7 +1290,142 @@ function openShop(){
   showOnly('shop');renderShop();
 }
 
+// ---------- tutorial ----------
+const demoCv=$('demo'),demoCtx=demoCv.getContext('2d');
+let tutTab='ctrl',D=null;
+function demoReset(){
+  D={t:0,d:0,bodyX:W/2,fingerX:W/2,chunks:new Map(),
+     feet:[{side:-1,x:W/2-FOOT_OFF,wy:L/2},{side:1,x:W/2+FOOT_OFF,wy:-L/2}],swingIdx:1,stepStart:0};
+  D.liftX=D.feet[1].x;D.liftWy=D.feet[1].wy;
+}
+function demoGen(ci){
+  const wy0=ci*CH,items=[];
+  if(wy0<250)return items;
+  const target=.16*(PATH_R-PATH_L)*CH;let area=0,g=0;
+  while(area<target&&g++<200){const it=makeItem(pickType(),wy0,items);items.push(it);area+=it.area}
+  return items;
+}
+function demoUpdate(dt){
+  D.t+=dt;
+  // finger sweeps left and right with short pauses at each side
+  const ph=Math.sin(D.t*1.15),tgt=W/2+100*Math.sign(ph)*Math.min(1,Math.abs(ph)*1.6);
+  D.fingerX=lerp(D.fingerX,tgt,Math.min(1,dt*6));
+  const mv=MAXV*dt;D.bodyX=clamp(D.bodyX+clamp(D.fingerX-D.bodyX,-mv,mv),PATH_L+FOOT_OFF,PATH_R-FOOT_OFF);
+  D.d+=SPEED*dt;
+  while(D.d-D.stepStart>=L){
+    const f=D.feet[D.swingIdx];f.wy=D.stepStart+1.5*L;f.x=D.bodyX+f.side*FOOT_OFF;
+    D.stepStart+=L;D.swingIdx=1-D.swingIdx;D.liftX=D.feet[D.swingIdx].x;D.liftWy=D.feet[D.swingIdx].wy;
+  }
+  const lo=Math.floor((D.d-(H-BODY_Y)-100)/CH),hi=Math.floor((D.d+BODY_Y)/CH);
+  for(let ci=Math.max(0,lo);ci<=hi;ci++)if(!D.chunks.has(ci))D.chunks.set(ci,demoGen(ci));
+  for(const ci of D.chunks.keys())if(ci<lo-1)D.chunks.delete(ci);
+}
+function drawFinger(x,y,press){
+  ctx.save();
+  ctx.globalAlpha=.25+.15*press;ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(x,y,18+6*press,0,7);ctx.fill();
+  ctx.globalAlpha=.95;
+  ctx.fillStyle='#ffe9d6';ctx.strokeStyle='#2b2013';ctx.lineWidth=2.5;
+  rr(x-10,y-12,20,70,10);ctx.fill();ctx.stroke();
+  ctx.fillStyle='#fff6ee';rr(x-6,y-8,12,11,5);ctx.fill();
+  ctx.strokeStyle='rgba(43,32,19,.35)';ctx.lineWidth=1.2;ctx.beginPath();ctx.moveTo(x-6,y+20);ctx.lineTo(x+6,y+20);ctx.stroke();
+  ctx.restore();
+  ctx.save();ctx.globalAlpha=.85;
+  outlineText('◀',x-36,y+4,16,'#fff4d6');outlineText('▶',x+36,y+4,16,'#fff4d6');
+  ctx.restore();
+}
+function drawDemo(dt){
+  if(!D)demoReset();
+  demoUpdate(dt);
+  const cw=demoCv.clientWidth;if(!cw)return;
+  const pd=Math.min(window.devicePixelRatio||1,2.5),wantW=Math.round(cw*pd),wantH=Math.round(cw*330/360*pd);
+  if(demoCv.width!==wantW||demoCv.height!==wantH){demoCv.width=wantW;demoCv.height=wantH}
+  const S={ctx,d,bodyX,feet,swingIdx,stepStart,liftX,liftWy,state};
+  ctx=demoCtx;d=D.d;bodyX=D.bodyX;feet=D.feet;swingIdx=D.swingIdx;stepStart=D.stepStart;liftX=D.liftX;liftWy=D.liftWy;state='demo';
+  const k=demoCv.width/W,top=H-330;
+  ctx.setTransform(k,0,0,k,0,-top*k);
+  ctx.fillStyle='#6d5839';ctx.fillRect(0,top,W,330);
+  ctx.fillStyle='#c3c1b9';ctx.fillRect(PATH_L,top,PATH_R-PATH_L,330);
+  ctx.fillStyle='#d9d5cc';ctx.fillRect(PATH_L-4,top,4,330);ctx.fillRect(PATH_R,top,4,330);
+  ctx.strokeStyle='#a3a198';ctx.lineWidth=1;ctx.beginPath();
+  const w0=Math.floor((d-(H-BODY_Y))/25)*25;
+  for(let wy=w0;wy<d+BODY_Y-top+25;wy+=25){
+    const y=sy(wy),row=Math.round(wy/25),off=((row%2)+2)%2*25;
+    ctx.moveTo(PATH_L,y);ctx.lineTo(PATH_R,y);
+    for(let x=PATH_L+off;x<PATH_R;x+=50){ctx.moveTo(x,y);ctx.lineTo(x,y-25)}
+  }
+  ctx.stroke();
+  const all=[];for(const its of D.chunks.values())all.push(...its);
+  all.sort((a,b)=>LAYER[a.type]-LAYER[b.type]);
+  for(const it of all)drawItem(it);
+  drawFeet();
+  drawFinger(D.fingerX,H-62,.5+.5*Math.sin(D.t*8));
+  ({ctx,d,bodyX,feet,swingIdx,stepStart,liftX,liftWy,state}=S);
+}
+
+const DEX=[
+  {k:'pulp',name:'과육 은행',tag:'die',tagText:'밟으면 사망',rate:12,size:44,
+   text:'아직 터지지 않은 쭈글쭈글한 주황색 은행이에요. 밟으면 무조건 신발에 묻어요. 은행잎에 가려진 부분을 밟았다면 괜찮아요.'},
+  {k:'seed',name:'씨앗 은행',tag:'die',tagText:'밟으면 사망',rate:5,size:44,
+   text:'과육은 이미 터지고 남은 살구색~상아색 씨앗이에요. 가장 작은 편이고, 밟으면 바사삭 부서지며 묻어요. 실제 판정은 보이는 것보다 10% 작아요. 은행잎에 가려져 있으면 괜찮아요.'},
+  {k:'burst',name:'터진 은행',tag:'maybe',tagText:'확률로 사망',rate:35,size:44,dry:true,
+   text:'이미 터져서 가장 넓게 퍼진 은행이에요. 건조도가 낮을수록(주황색일수록) 잘 묻어요. 묻을 확률은 100에서 건조도를 뺀 만큼이에요. 같은 은행은 두 번째 밟을 땐 다시 판정하지 않아요.',
+   meta:'건조도 100: 45% · 70~99: 30% · 0~69: 25%'},
+  {k:'frag',name:'파편 은행',tag:'maybe',tagText:'확률로 사망',rate:10,size:44,dry:true,
+   text:'터진 은행과 씨앗 은행 주변에 흩어진 가장 작은 조각이에요. 40%는 너무 작아서 그냥 지나가고, 나머지는 건조도에 따라 묻어요.',
+   meta:'대부분(75%)은 건조도 80~100'},
+  {k:'leaf',name:'은행잎',tag:'safe',tagText:'안전',rate:38,size:44,
+   text:'밟아도 아무 일 없어요. 대신 아래에 무엇이 숨어 있을지 몰라요. 잎이 은행을 가리고 있으면 가려진 곳을 밟아도 무시돼요.'},
+];
+function drawItemAt(it,cx,cy){const sd=d;it.x=cx;d=it.wy-BODY_Y+cy;drawItem(it);d=sd}
+function drawDexIcon(c,k,S){
+  const cw=c.clientWidth;if(!cw)return;
+  const pd=Math.min(window.devicePixelRatio||1,2.5);c.width=c.height=Math.round(cw*pd);
+  const saveCtx=ctx;ctx=c.getContext('2d');
+  ctx.setTransform(c.width/S,0,0,c.width/S,0,0);
+  ctx.fillStyle='#c3c1b9';ctx.fillRect(0,0,S,S);
+  const m=S/2;
+  if(k==='frag'){
+    [[100,m-6,m-4],[55,m+6,m-1],[10,m-1,m+7]].forEach(([dry,x,y])=>{const it=makeItem('frag',0,[]);it.dry=dry;drawItemAt(it,x,y)});
+  }else if(k==='leaf'){
+    const p=makeItem('pulp',0,[]);drawItemAt(p,m+7,m+8);
+    const l=makeItem('leaf',0,[]);l.rot=-.4;drawItemAt(l,m-2,m-2);
+  }else{
+    const it=makeItem(k,0,[]);
+    if(k==='burst')it.dry=82;
+    drawItemAt(it,m,m);
+  }
+  ctx=saveCtx;
+}
+function renderDex(){
+  const box=$('tutDex');box.innerHTML='';
+  for(const e of DEX){
+    const el=document.createElement('div');el.className='dex';
+    el.innerHTML=`<canvas class="dicon" aria-label="${e.name} 그림"></canvas><div class="dtext">`+
+      `<div class="dhead"><b>${e.name}</b><span class="dtag ${e.tag}">${e.tagText}</span></div>`+
+      `<p>${e.text}</p>`+
+      (e.dry?`<div class="drybar" aria-hidden="true"></div><div class="drylab"><span>축축(잘 묻음)</span><span>바짝 마름(안 묻음)</span></div>`:'')+
+      `<span class="dmeta2">전체 은행 중 ${e.rate}%${e.meta?' · '+e.meta:''}</span></div>`;
+    box.appendChild(el);
+  }
+  const note=document.createElement('p');note.className='dnote';
+  note.textContent='축구화와 하이힐은 모든 은행의 묻을 확률을 20%씩 낮춰 줘요. 과육 은행과 씨앗 은행도 20% 확률로 살아남아요.';
+  box.appendChild(note);
+  box.querySelectorAll('.dicon').forEach((c,i)=>drawDexIcon(c,DEX[i].k,DEX[i].size));
+}
+function setTutTab(tab){
+  tutTab=tab;
+  $('tabCtrl').setAttribute('aria-selected',String(tab==='ctrl'));
+  $('tabDex').setAttribute('aria-selected',String(tab==='dex'));
+  $('tutCtrl').hidden=tab!=='ctrl';$('tutDex').hidden=tab!=='dex';
+  if(tab==='dex')renderDex();else demoReset();
+}
+function openTut(){audioOn();state='tut';showOnly('tut');setTutTab('ctrl')}
+
 // ---------- wiring ----------
+$('btnTut').onclick=openTut;
+$('btnTutClose').onclick=()=>{state='menu';showOnly('menu')};
+$('tabCtrl').onclick=()=>setTutTab('ctrl');
+$('tabDex').onclick=()=>setTutTab('dex');
 $('btnInf').onclick=()=>start('infinite');
 $('btnCh').onclick=()=>{renderChal();showOnly('chal')};
 $('btnChBack').onclick=()=>showOnly('menu');
