@@ -1456,10 +1456,30 @@ window.addEventListener('keydown',e=>{
   if(e.key==='Escape'){state==='play'?pause():resume()}
 });
 
+// ---------- auto update (GitHub Pages) ----------
+// Bump APP_VERSION on every release. A home-screen copy that is still showing an
+// old cached page fetches the live index.html, sees a newer version and reloads.
+const APP_VERSION='2026-11-05a';
+function checkUpdate(){
+  if(!/github\.io$/.test(location.hostname)||!window.fetch)return;
+  const url=location.href.split('#')[0].split('?')[0]+'?v='+Date.now();
+  fetch(url,{cache:'no-store'}).then(r=>r.ok?r.text():'').then(txt=>{
+    const m=txt.match(/const APP_VERSION='([^']+)'/);
+    if(!m||m[1]===APP_VERSION)return;
+    let tried=null;try{tried=sessionStorage.getItem('ginkgo_upd')}catch(e){}
+    if(tried===m[1])return; // already tried once this session; avoid a reload loop
+    try{sessionStorage.setItem('ginkgo_upd',m[1])}catch(e){}
+    if(state==='play'||state==='fail')return; // never interrupt a run
+    location.reload();
+  }).catch(()=>{});
+}
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)checkUpdate()});
+
 // boot
 window.addEventListener('resize',fit);fit();
 toMenu();
 requestAnimationFrame(frame);
+checkUpdate();
 })();
 </script>
 </body>
